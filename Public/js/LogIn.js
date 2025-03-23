@@ -22,13 +22,21 @@ async function logIn(event) {
         window.location.href="../views/expense"
     }
     else{
+      alert(response.data.message)
         throw new Error(response.data.message)
     }
   
    
   }
   catch(err){
+    if (err.response.status === 401) {
+      alert("User not authorized!");}
+    else if(err.response.status === 404) {
+      alert("User does not exist!");
+    }else
+    {
     console.log(JSON.stringify(err))
     document.body.innerHTML +=`<div style="color:red">${err} </div>`;
+    }
   }
   }

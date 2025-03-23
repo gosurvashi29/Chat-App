@@ -81,13 +81,13 @@ exports.logIn = async (req,res)=>{
 
             }
             else{
-                return res.status(400).json({success : false,message :"Password is Incorrect!"}) // password does not match
+                return res.status(401).json({success : false,message :"User not authorized!"}) // password does not match
 
             }
 
         })
     } else{
-        return res.status(404).json({success:false, message :"User does not exist"})
+        return res.status(404).json({success:false, message :"User does not exist!"})
     }
 
     
