@@ -92,7 +92,7 @@ app.use("/password",passwordRoutes)
             
             if (err) {
                 console.error('Error serving file:', err); 
-                res.status(404).send('File Not Found'); 
+                res.status(404).send('File Not Found');  
             }
         });  
     }

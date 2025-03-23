@@ -18,6 +18,7 @@ async function signUp(event) {
   const response= await axios.post("http://localhost:3000/user/signup",signUpDetails)
 
   if (response.status===201){
+    alert("Successfully signed up!");
     window.location.href="../views/LogIn"
   }
   else{
@@ -25,6 +26,10 @@ async function signUp(event) {
   }
 }
 catch(err){
+  if (err.response.status === 409) {
+    alert("User already exists, Please Login");
+  } else {
   document.body.innerHTML +=`<div style="color:red">${err} </div>`; 
+}
 }
 }

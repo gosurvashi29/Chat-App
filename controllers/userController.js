@@ -15,6 +15,19 @@ exports.signUp = async (req,res)=>{
     if(!username || !email || !password){
         return res.status(400).json({err: 'Bad Parameters . Something is missing'})
     }
+
+
+    
+    const existingUser = await User.findOne({
+        where: { email: email }
+      });
+  
+      if (existingUser) {
+        
+        return res.status(409).json({ err: 'User already exists, Please Login' });
+      }
+
+
     const saltrounds=10;
     bcrypt.hash(password, saltrounds, async(err,hash)=>{
         console.log(err)
