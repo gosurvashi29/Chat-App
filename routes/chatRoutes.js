@@ -1,19 +1,12 @@
-// chatRouter.js
 const express = require('express');
-const jwt = require('jsonwebtoken');
 const router = express.Router();
-const socketIo = require('socket.io');
-const authenticate= require("../middleware/auth")
-const {getActiveUsers,
-    handleSocketConnection,
-    activeUsers,addMessage} = require('../controllers/chatController')
+const authenticate = require("../middleware/auth");
+const { getMessages, addMessage } = require('../controllers/chatController');
 
+// Get all messages
+router.get('/messages', authenticate, getMessages);
 
-
-
-// Get active users
-router.get('/users/active', authenticate, getActiveUsers)
-
+// Send a new message
 router.post('/send', authenticate, addMessage);
 
 module.exports = router;
