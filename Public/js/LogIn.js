@@ -19,7 +19,7 @@ async function logIn(event) {
         alert(response.data.message)
         localStorage.setItem('token', response.data.token)
         console.log(response.data.isPremium)
-        window.location.href="../views/expense"
+        window.location.href="../views/chat"
     }
     else{
       alert(response.data.message)
