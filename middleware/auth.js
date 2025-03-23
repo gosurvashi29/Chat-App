@@ -6,11 +6,11 @@ const authenticate = async(req,res,next)=>{
     try{
         const token= req.header('Authorization');
         
-        console.log("user is, ", token)
+        
         const decoded = jwt.verify(token,process.env.TOKEN);
-        console.log("user is, ", decoded)
+        
         const user= await User.findByPk(decoded.userId)
-        console.log("user is, ", user)
+        
          if (!user){
             return res.status(401).json({message : "User Not Found!"})
          }

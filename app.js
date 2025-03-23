@@ -8,7 +8,7 @@ const sequelize= require("./util/database")
 const jwt = require('jsonwebtoken');
 const userRoutes= require("./routes/userRouter")
 const chatRoutes= require("./routes/chatRoutes")
-const passwordRoutes= require("./routes/passwordRoutes")
+const groupRoutes= require("./routes/groupRoutes")
 const userController= require("./controllers/userController")
 //const expenseRoutes = require('./routes/expenseRoutes');
 const User = require("./models/userModel")
@@ -49,6 +49,7 @@ app.use(express.static(path.join(__dirname,"Public")));
 
 app.use("/user",userRoutes);  
 app.use("/chat",chatRoutes);
+app.use('/groups', groupRoutes);
 
 // Initialize socket handling
 io.on('connection', (socket) => {
