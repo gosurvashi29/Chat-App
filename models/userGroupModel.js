@@ -16,7 +16,7 @@ const UserGroup = sequelize.define('UserGroup', {
         primaryKey: true
     },
 }, {
-    timestamps: true,  // Automatically adds createdAt and updatedAt
+    timestamps: true,  
     indexes: [
         {
             unique: true,

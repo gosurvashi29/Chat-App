@@ -1,11 +1,10 @@
-// Fetch the token from localStorage
-//const token = localStorage.getItem('token');
+let selectedGroupId = null;  // Variable to store the selected group ID
 
-// Ensure the token exists, otherwise show an error
+
 if (!token) {
     console.error('No token found. Please log in.');
-    // Optionally, you can redirect the user to the login page
-    window.location.href = '../views/LogIn';  // Adjust according to your app's structure
+    // Redirect to login page if no token is found
+    window.location.href = '../views/LogIn';  
 }
 
 // Fetch and display the groups the user is part of
@@ -14,11 +13,13 @@ async function loadGroups() {
         const response = await axios.get('http://localhost:3000/groups', {
             headers: { 'Authorization': token }
         });
-            console.log(response.data.groups)
+
+        console.log(response.data.groups);  // Check the structure of the response
+
         const groupsList = document.getElementById('groups-list');
         groupsList.innerHTML = '';  // Clear current groups
 
-        if (!response.data.groups) {
+        if (response.data.groups.length === 0) {
             // Display message if no groups are found
             const noGroupsMessage = document.createElement('li');
             noGroupsMessage.textContent = 'No groups available';
@@ -27,9 +28,9 @@ async function loadGroups() {
             // Populate groups list
             response.data.groups.forEach(group => {
                 const groupItem = document.createElement('li');
-                groupItem.textContent = group.name;
+                groupItem.textContent = `${group.name} (ID: ${group.id})`;  // Show both name and id
                 groupItem.addEventListener('click', () => {
-                    selectGroup(group.id);
+                    selectGroup(group.id);  // Set selected group ID when clicked
                 });
                 groupsList.appendChild(groupItem);
             });
@@ -39,21 +40,24 @@ async function loadGroups() {
     }
 }
 
-// Select a group and load its messages
+// Handle group selection and load its messages
 async function selectGroup(groupId) {
-    // Fetch and display messages for the selected group
+    selectedGroupId = groupId;  // Store the selected group ID
+
     try {
-        const response = await axios.get(`http://localhost:3000/groups/${groupId}/messages`, {
-            headers: { 'Authorization': token }
+        const response = await axios.get('http://localhost:3000/groups/messages', {
+            headers: { 'Authorization': token },
+            params: { groupId }  // Pass groupId as query parameter
         });
 
-        // Assuming you have a 'messages' section in your HTML
+        console.log(response.data.messages);  // Check the messages
+
         const messagesContainer = document.getElementById('messages');
         messagesContainer.innerHTML = '';  // Clear previous messages
 
         response.data.messages.forEach(message => {
             const messageDiv = document.createElement('div');
-            messageDiv.textContent = `${message.User.username}: ${message.message}`;
+            messageDiv.textContent = `${message.user_id}: ${message.message}`;
             messagesContainer.appendChild(messageDiv);
         });
     } catch (error) {
@@ -61,6 +65,36 @@ async function selectGroup(groupId) {
     }
 }
 
+// Function to send a message to the selected group
+const sendMessageInGroup = async () => {
+    const message = document.getElementById("message").value;
+    
+    if (selectedGroupId === null) {
+        console.error("No group selected. Please select a group first.");
+        return;  // Prevent sending message if no group is selected
+    }
+
+    if (message.trim() !== "") {
+        try {
+            const response = await axios.post(
+                "http://localhost:3000/chat/send",  // Assuming your backend endpoint is /chat/send
+                {
+                    message: message,
+                    group_id: selectedGroupId  // Send the selected group ID along with the message
+                },
+                { headers: { 'Authorization': token } }
+            );
+
+            console.log('Message sent successfully:', response.data);
+            document.getElementById("message").value = "";  // Clear the input field
+
+            // Fetch and display the updated messages after sending a new one
+            selectGroup(selectedGroupId); // Reload the messages for the selected group
+        } catch (error) {
+            console.error("Error sending message to DB:", error);
+        }
+    }
+};
 // Create a new group
 document.getElementById('create-group-btn').addEventListener('click', async () => {
     const groupName = prompt('Enter group name:');
@@ -69,6 +103,23 @@ document.getElementById('create-group-btn').addEventListener('click', async () =
             await axios.post('http://localhost:3000/groups/create', { name: groupName }, {
                 headers: { 'Authorization': token }
             });
+            loadGroups();  
+        } catch (error) {
+            console.error('Error creating group:', error);
+        }
+    }
+});
+
+// invite users to group
+document.getElementById('invite-users-btn').addEventListener('click', async () => {
+    const groupName = prompt('Enter group name:');
+    const userName = prompt('Enter member name:');
+    if (groupName) {
+        try {
+            await axios.post('http://localhost:3000/groups/invite', {groupName,userName }, {
+                headers: { 'Authorization': token }
+            });
+            alert("User Added Successfully!")
             loadGroups();  // Reload groups after creating a new one
         } catch (error) {
             console.error('Error creating group:', error);
@@ -76,5 +127,44 @@ document.getElementById('create-group-btn').addEventListener('click', async () =
     }
 });
 
-// Load groups when the page is ready
+
+// remove user
+document.getElementById('remove-users-btn').addEventListener('click', async () => {
+    const groupName = prompt('Enter group name:');
+    const userName = prompt('Enter member name:');
+    if (groupName) {
+        try {
+            await axios.post('http://localhost:3000/groups/remove', {groupName,userName }, {
+                headers: { 'Authorization': token }
+            });
+            alert("User Removed Successfully!")
+            loadGroups();  // Reload groups after creating a new one
+        } catch (error) {
+            console.error('Error creating group:', error);
+        }
+    }
+});
+
+// make admin
+document.getElementById('make-admin-btn').addEventListener('click', async () => {
+    const groupName = prompt('Enter group name:');
+    const userName = prompt('Enter member name:');
+    if (groupName) {
+        try {
+            await axios.post('http://localhost:3000/groups/makeadmin', {groupName,userName }, {
+                headers: { 'Authorization': token }
+            });
+            alert("User made Admin Successfully!")
+            loadGroups();  // Reload groups after creating a new one
+        } catch (error) {
+            console.error('Error creating group:', error);
+        }
+    }
+});
+
+
+// Send message button event listener
+document.getElementById("send-btn").addEventListener("click", sendMessageInGroup);
+
+// Initial group load on page load
 loadGroups();

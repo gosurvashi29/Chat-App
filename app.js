@@ -10,14 +10,7 @@ const userRoutes= require("./routes/userRouter")
 const chatRoutes= require("./routes/chatRoutes")
 const groupRoutes= require("./routes/groupRoutes")
 const userController= require("./controllers/userController")
-//const expenseRoutes = require('./routes/expenseRoutes');
 const User = require("./models/userModel")
-//const Order = require("./models/orderModel")
-//const ForgotPasswordRequest= require("./models/ForgotPasswordRequest")
-//const Expense= require("./models/expense")
-const paymentRoutes = require('./routes/paymentRoutes');
-
-const premiumFeatureRoutes = require('./routes/premiumFeature')
 const fetch = require("node-fetch"); // For making API calls
 
 
@@ -36,7 +29,7 @@ app.use(cors({
 
 
 app.use(bodyParser.json());
-app.use(express.urlencoded({extended: false}));
+app.use(express.urlencoded({extended: false})); 
 app.use(express.static(path.join(__dirname,"Public"))); 
 
 //User.hasMany(Expense); // One to Many Relationship 

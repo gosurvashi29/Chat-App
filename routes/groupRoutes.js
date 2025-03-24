@@ -5,7 +5,10 @@ const {
     createGroup, 
     getGroups, 
     inviteUserToGroup, 
-    sendMessageToGroup 
+    sendMessageToGroup ,
+    getMessagesFromGroup,
+    removeUserFromGroup,
+    makeAdminGroup
 } = require('../controllers/groupController');
 
 // Create a new group
@@ -15,9 +18,15 @@ router.post('/create', authenticate, createGroup);
 router.get('/', authenticate, getGroups);
 
 // Invite a user to a group
-router.post('/:groupId/invite', authenticate, inviteUserToGroup);
+router.post('/invite', authenticate, inviteUserToGroup);
+
+// Remove a user
+router.post('/remove', authenticate, removeUserFromGroup);
+
+// Make Admin
+router.post('/makeadmin', authenticate, makeAdminGroup);
 
 // Send a message in a group
-router.post('/:groupId/messages', authenticate, sendMessageToGroup);
+router.get('/messages', authenticate, getMessagesFromGroup);
 
 module.exports = router;

@@ -101,7 +101,7 @@ window.onload = function () {
 //setInterval(fetchMessages, 1000);
 
 
-document.getElementById("send-btn").addEventListener("click", sendMessage);
+//document.getElementById("send-btn").addEventListener("click", sendMessage);
 
 
 fetchActiveUsers();
