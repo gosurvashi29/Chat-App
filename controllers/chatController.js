@@ -1,3 +1,4 @@
+require('dotenv').config();
 const Message = require('../models/messagesModel');  
 const User  = require('../models/userModel');  
 const Group = require('../models/groupModel');
@@ -30,29 +31,37 @@ exports.getMessages = async (req, res) => {
 
 
 exports.addMessage = async (req, res) => {
-    const { message, group_id } = req.body;  // Ensure group_id is part of the request body
-
+    const { message, group_id } = req.body;  
+    const userId = req.user.id;
     try {
-        // Check if the user exists (this should be handled by your authentication middleware)
+        
         const user = await User.findByPk(req.user.id);
         if (!user) {
             return res.status(404).json({ error: "User not found" });
         }
 
-        // Check if the group exists
-        const group = await Group.findByPk(group_id);  // Ensure the group_id is valid
+        
+        const group = await Group.findByPk(group_id);  
         if (!group) {
             return res.status(404).json({ error: "Group not found" });
         }
 
-        // Create the message in the correct group
+        const name = await User.findOne({
+            where: { userId}
+        });
+        
+        
+
+        
         const newMessage = await Message.create({
             message: message,
             user_id: req.user.id,
-            group_id: group_id,  // Use the group_id from the request body
+            user_name: name.id,
+            group_id: group_id 
         });
 
-        // Return the message that was saved
+        io.emit("message", { message: newMessage});
+        
         res.status(201).json({ message: newMessage });
     } catch (err) {
         console.error("Error saving message", err);
@@ -62,7 +71,7 @@ exports.addMessage = async (req, res) => {
 
 exports.getActiveUsers = async (req, res) => {
     try {
-        // Assuming you have a way to track active users (e.g., a session store or JWT tokens)
+        
         const users = await User.findAll({
             attributes: ['id', 'username'],  
         });

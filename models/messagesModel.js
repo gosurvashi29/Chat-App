@@ -18,6 +18,10 @@ const Message = sequelize.define('Message', {
         type: Sequelize.INTEGER,
         allowNull: false
     },
+    user_name:{
+        type: Sequelize.STRING,
+        allowNull: false
+    },
     group_id: {
         type: Sequelize.INTEGER,
         allowNull: false

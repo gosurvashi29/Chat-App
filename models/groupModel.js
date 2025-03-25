@@ -1,8 +1,8 @@
-// models/groupModel.js
+
 const Sequelize = require('sequelize');
 const sequelize = require('../util/database');
 const User = require('./userModel');
-//const UserGroup = require('./userGroupModel'); // Ensure this is properly imported
+
 
 const Group = sequelize.define('Group', {
     id: {
@@ -19,12 +19,12 @@ const Group = sequelize.define('Group', {
         allowNull: false
     },
 }, {
-    timestamps: true,  // Automatically adds createdAt and updatedAt
+    timestamps: true, 
 });
 
 // Define relationships
-Group.belongsTo(User, { foreignKey: 'createdBy', as: 'Creator' });  // A group is created by a user
-User.hasMany(Group, { foreignKey: 'createdBy' }); // A user can create many groups
+Group.belongsTo(User, { foreignKey: 'createdBy', as: 'Creator' });  
+User.hasMany(Group, { foreignKey: 'createdBy' }); 
 
 // Correct many-to-many relationship
 Group.belongsToMany(User, { through: 'UserGroup', foreignKey: 'group_id' });

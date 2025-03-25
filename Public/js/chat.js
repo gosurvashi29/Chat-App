@@ -1,4 +1,9 @@
+//const socket = io(); // this line will create connection and will generate socket id
 const token = localStorage.getItem('token');  
+
+/*socket.on("message", (messages) => {
+    renderMessages(messages);
+});*/
 
 async function fetchMessages() {
     try {
@@ -29,7 +34,7 @@ async function fetchMessages() {
         
         }
     } catch (error) {
-        console.error("Error fetching messages", error);
+        console.error("Error fetching messages", error); 
     }
 }
 
@@ -37,12 +42,14 @@ async function fetchMessages() {
 function renderMessages(messages) {
     const messagesContainer = document.getElementById("messages");
     messagesContainer.innerHTML = '';  // Clear previous messages
-
+    
+    
     messages.forEach(message => {
         const messageDiv = document.createElement("div");
-        messageDiv.textContent = `${message.User.username}: ${message.message}`;
+        messageDiv.textContent = `${message.user_name}: ${message.message}`;
         messagesContainer.appendChild(messageDiv);
     });
+
 }
 
 async function fetchActiveUsers() {
@@ -95,7 +102,7 @@ window.onload = function () {
     const storedMessages = JSON.parse(localStorage.getItem('messages')) || [];
     renderMessages(storedMessages);
     
-    // Fetch new messages from the backend after the page loads
+    
     fetchMessages();
 };
 //setInterval(fetchMessages, 1000);

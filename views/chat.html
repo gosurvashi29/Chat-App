@@ -15,15 +15,21 @@
                 <!-- Active users -->
             </ul>
         </div>
-
+        
         <div id="chat-window">
             <div id="messages">
                 <!-- Messages -->
             </div>
+            <form action = "/upload" method="POST" enctype="multipart/form-data">
             <div id="chat-input">
                 <textarea id="message" placeholder="Type a message"></textarea>
                 <button id="send-btn">Send</button>
+                </div>
+                <div>
+                <input type="file" name="images">
+                <button type="submit" id="sendfile-btn">Send File</button>
             </div>
+        </form>
         </div>
     </div>
     <div id="sidebar">
@@ -38,7 +44,10 @@
 
     </div>
     
-   
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+    </script>
     <script src="../chat"></script>
     <script src="../group"></script>
 </body>

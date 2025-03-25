@@ -1,8 +1,20 @@
+require('dotenv').config();
+const express= require("express");
 const { Op } = require('sequelize');
 const Group = require('../models/groupModel');
 const GroupMember = require('../models/userGroupModel');
 const Message = require('../models/messagesModel');
 const User = require('../models/userModel');
+const AWSService = require('../services/awsService');
+const sequelize= require("../util/database")
+const fs = require('fs');
+const path = require('path');
+const app = express();
+const http = require("http")
+const { Parser } = require('json2csv');
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server); 
 
 
 exports.createGroup = async (req, res) => {
@@ -23,6 +35,7 @@ exports.createGroup = async (req, res) => {
         await GroupMember.create({
             group_id: group.id,
             user_id: userId,
+            isAdmin:true
             
         });
        
@@ -34,28 +47,11 @@ exports.createGroup = async (req, res) => {
 };
 
 
-exports.getGroups1 =async (req, res)=> {
-    try {
-        const userId= req.user.id;
-        
-        const groups = await Group.findAll({
-            include: [
-                {
-                    model: User,
-                    as: 'Creator',  
-                }
-            ]
-        });
-        
-        res.json({ groups });
-    } catch (error) {
-        console.error('Error fetching groups:', error);
-        res.status(500).json({ error: 'Failed to fetch groups' });
-    }
-}
+
 exports.getGroups = async (req, res) => {
     try {
         const userId = req.user.id;
+        console.log(userId)
 
         
         const groupMembers = await GroupMember.findAll({
@@ -63,6 +59,7 @@ exports.getGroups = async (req, res) => {
             attributes: ['group_id'] 
         });
 
+        
         
         const groupIds = groupMembers.map(groupMember => groupMember.group_id);
 
@@ -106,13 +103,15 @@ exports.inviteUserToGroup = async (req, res) => {
         console.log(group)
         
         const isAdmin = await GroupMember.findOne({
+            attributes: ['isAdmin'],  
             where: {
-                user_id:userId,
+                user_id: userId,
                 group_id: group.id
-                
             }
         });
+
         console.log(isAdmin)
+        
         if (!isAdmin) {
             return res.status(403).json({ error: 'Only admins can invite users' });
         }
@@ -128,7 +127,8 @@ exports.inviteUserToGroup = async (req, res) => {
         
         await GroupMember.create({
             group_id: group.id,   
-            user_id: invitee.id  
+            user_id: invitee.id,
+            isAdmin:false 
         });
 
         res.status(200).json({ message: 'User invited successfully' });
@@ -143,10 +143,10 @@ exports.inviteUserToGroup = async (req, res) => {
 // Remove a user 
 exports.removeUserFromGroup = async (req, res) => {
     try {
-        const { groupName, userName } = req.body; // Get groupName and userName from the request body
-        const userId = req.user.id; // The authenticated user ID
+        const { groupName, userName } = req.body; 
+        const userId = req.user.id; 
 
-        // Find the group by its name
+        
         const group = await Group.findOne({ where: { name: groupName } });
 
         if (!group) {
@@ -154,19 +154,21 @@ exports.removeUserFromGroup = async (req, res) => {
         }
         console.log(group);
         
-        // Check if the user is an admin of the group by querying the GroupMember table
         const isAdmin = await GroupMember.findOne({
+            attributes: ['isAdmin'],  
             where: {
                 user_id: userId,
                 group_id: group.id
             }
         });
+
         console.log(isAdmin);
+        
         if (!isAdmin) {
             return res.status(403).json({ error: 'Only admins can remove users' });
         }
         
-        // Find the user to be removed by their username
+        
         const userToRemove = await User.findOne({ where: { username: userName } });
 
         if (!userToRemove) {
@@ -175,11 +177,11 @@ exports.removeUserFromGroup = async (req, res) => {
         console.log("group id is", group.id);
         console.log("user to remove id is", userToRemove.id);
 
-        // Remove the user from the group by deleting the entry in GroupMember
+        
         await GroupMember.destroy({
             where: {
-                group_id: group.id,    // The group ID
-                user_id: userToRemove.id  // The user ID to be removed
+                group_id: group.id,    
+                user_id: userToRemove.id  
             }
         });
 
@@ -205,13 +207,13 @@ exports.makeAdminGroup = async (req, res) => {
         console.log(group)
         
         const isAdmin = await GroupMember.findOne({
+            attributes: ['isAdmin'],  
             where: {
-                user_id:userId,
+                user_id: userId,
                 group_id: group.id
-                
             }
         });
-        console.log(isAdmin)
+       
         if (!isAdmin) {
             return res.status(403).json({ error: 'Only admins can invite users' });
         }
@@ -225,12 +227,11 @@ exports.makeAdminGroup = async (req, res) => {
         console.log("group id is", group.id)
         console.log("invitee id is", invitee.id)
         
-        await GroupMember.create({
-            group_id: group.id,   
-            user_id: invitee.id  
-        });
+        
+        invitee.isAdmin=true;
+        await invitee.save();
 
-        res.status(200).json({ message: 'User invited successfully' });
+        res.status(200).json({ message: 'User made admin successfully' });
     } catch (err) {
         console.error('Error inviting user to group:', err);
         res.status(500).json({ error: 'Failed to invite user' });
@@ -241,25 +242,67 @@ exports.makeAdminGroup = async (req, res) => {
 // Send a message in a group
 exports.sendMessageToGroup = async (req, res) => {
     try {
-        const { groupN } = req.body;
+        const { group_id } = req.body;
         const { message } = req.body;
         const userId = req.user.id;
 
         
         const isMember = await GroupMember.findOne({
-            where: { userId, groupId }
+            where: { user_id:userId, group_id }
         });
 
         if (!isMember) {
             return res.status(403).json({ error: 'You are not a member of this group' });
         }
-
+        const name = await User.findOne({
+            where: { id:userId}
+        });
         
         const newMessage = await Message.create({
             message,
-            userId,
-            groupId
+            user_id:userId,
+            user_name: name.username,
+            group_id:group_id,
         });
+
+
+        io.emit("message", { message: newMessage});
+
+        res.status(201).json({ message: newMessage });
+    } catch (err) {
+        console.error('Error sending message:', err);
+        res.status(500).json({ error: 'Failed to send message' });
+    }
+};
+
+// Send mutimedia in a group
+exports.sendMultimedia = async (req, res) => {
+    try {
+        const { group_id } = req.body;
+        const { message } = req.body;
+        const userId = req.user.id;
+
+        
+        const isMember = await GroupMember.findOne({
+            where: { user_id:userId, group_id }
+        });
+
+        if (!isMember) {
+            return res.status(403).json({ error: 'You are not a member of this group' });
+        }
+        const name = await User.findOne({
+            where: { id:userId}
+        });
+        
+        const newMessage = await Message.create({
+            message,
+            user_id:userId,
+            user_name: name.username,
+            group_id:group_id,
+        });
+
+
+        io.emit("message", { message: newMessage});
 
         res.status(201).json({ message: newMessage });
     } catch (err) {
@@ -270,26 +313,57 @@ exports.sendMessageToGroup = async (req, res) => {
 
 exports.getMessagesFromGroup = async (req, res) => {
     try {
-        const { groupId }  = req.query;  // Get the groupId from the request body
+        const { groupId }  = req.query;  
         
-        const userId = req.user.id;    // Get the authenticated user's ID
+        const userId = req.user.id;    
         console.log(groupId);
 
-        // Fetch messages for the specific group directly from the Group table
+        
         const messages = await Message.findAll({
-            where: { group_id : groupId }, // Filter groups by the groupId
-            attributes: ['user_id', 'message'], // Fetch user_id and message columns
-            order: [['createdAt', 'ASC']], // Order by the creation time of the messages (if applicable)
+            where: { group_id : groupId }, 
+            attributes: ['user_name', 'message'], 
+            order: [['createdAt', 'ASC']], 
         });
 
         if (!messages) {
             return res.status(404).json({ error: 'No messages found for this group' });
         }
 
-        // Return the messages (user_id and message) as a response
+        
         res.status(200).json({ messages });
     } catch (err) {
         console.error("Error fetching messages:", err);
         res.status(500).json({ error: "Failed to fetch messages" });
     }
 };
+
+exports.downloadExpenses = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const expenses = await req.user.getExpenses({
+        attributes: ['amount', 'category', 'description', 'createdAt']
+      });
+  
+      // Convert JSON to CSV
+      const fields = ['amount', 'category', 'description', 'createdAt'];
+      const json2csvParser = new Parser({ fields });
+      const csv = json2csvParser.parse(expenses);
+  
+      // Generate unique key for the file
+      const key = `myExpenses-${userId}-${Date.now()}.csv`;
+  
+      // Upload CSV to S3 using AWSService
+      const uploadResult = await AWSService.uploadToS3(process.env.BUCKET_NAME, key, csv);
+  
+      // Save file info to the database
+      const fileInfo = { fileName: key, url: uploadResult.Location };
+      const response = await req.user.createDownloaded(fileInfo);
+      console.log(response);
+  
+      return res.status(200).json({ fileUrl: uploadResult.Location });
+    } catch (err) {
+      console.error('Error in downloadExpenses controller:', err);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  };
+

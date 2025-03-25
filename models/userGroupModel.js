@@ -15,6 +15,8 @@ const UserGroup = sequelize.define('UserGroup', {
         allowNull: false,
         primaryKey: true
     },
+    isAdmin:{
+        type: Sequelize.BOOLEAN}
 }, {
     timestamps: true,  
     indexes: [

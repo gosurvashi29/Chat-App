@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authenticate = require("../middleware/auth");
+const upload = require("../middleware/upload");
 const { 
     createGroup, 
     getGroups, 
@@ -8,7 +9,8 @@ const {
     sendMessageToGroup ,
     getMessagesFromGroup,
     removeUserFromGroup,
-    makeAdminGroup
+    makeAdminGroup,
+    sendMultimedia,
 } = require('../controllers/groupController');
 
 // Create a new group
@@ -27,6 +29,13 @@ router.post('/remove', authenticate, removeUserFromGroup);
 router.post('/makeadmin', authenticate, makeAdminGroup);
 
 // Send a message in a group
+router.post('/sendMessage', authenticate,sendMessageToGroup);
+
 router.get('/messages', authenticate, getMessagesFromGroup);
+
+//Send multimedia files
+router.post('/sendMultimedia', authenticate,upload, sendMultimedia);
+
+
 
 module.exports = router;
